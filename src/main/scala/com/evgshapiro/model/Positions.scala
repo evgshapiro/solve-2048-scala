@@ -19,6 +19,8 @@ object Positions {
   extension (p: Position)
     inline def y: Int = (p >> 2) & mask
     inline def x: Int = p & mask
+    inline def withY(v: Int): Position = (p & ~(mask << 2)) | ((v & mask) << 2)
+    inline def withX(v: Int): Position = (p & ~mask) | (v & mask)
     inline def isFirstRow: Boolean = y == 0
     inline def isLastRow: Boolean = y == L
     inline def isFirstCol: Boolean = x == 0

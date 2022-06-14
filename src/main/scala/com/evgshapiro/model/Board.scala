@@ -37,46 +37,47 @@ class Board(board: Array[Int] = new Array[Int](16)) {
   }
 
   def fallCombine(a: Action): Boolean = {
-    val (it, mergeSkip, nbr, s, r) = a match {
-      case Action.Left => (topLeftToBottomRight, firstCol, prevCol, y, relocateFirstCol)
-      case Action.Right => (bottomRightToTopLeft, lastCol, nextCol, y, relocateLastCol)
-      case Action.Up => (topLeftToBottomRight, firstRow, prevRow, x, relocateFirstRow)
-      case Action.Down => (bottomRightToTopLeft, lastRow, nextRow, x, relocateLastRow)
+    val (it, mergeSkip, nbr, pit) = a match {
+      case Action.Left => (topLeftToBottomRight, firstCol, prevCol, PositionIterator.topLeftToBottomRight)
+      case Action.Right => (bottomRightToTopLeft, lastCol, nextCol, PositionIterator.bottomRightToTopLeft)
+      case Action.Up => (topLeftToBottomRight, firstRow, prevRow, PositionIterator.topLeftToBottomRight)
+      case Action.Down => (bottomRightToTopLeft, lastRow, nextRow, PositionIterator.bottomRightToTopLeft)
     }
-    val f1 = fall(it, s, r)
+    val f1 = fall(pit, a)
     val m = merge(it.view.filterNot(mergeSkip), nbr)
-    fall(it, s, r)
+    fall(pit, a)
     f1 || m
   }
 
-  private def relocateFirstRow(c: YX, i: Int): YX = i -> c._2
-  private def relocateLastRow(c: YX, i: Int): YX = (L - i) -> c._2
-  private def relocateFirstCol(c: YX, i: Int): YX = c._1 -> i
-  private def relocateLastCol(c: YX, i: Int): YX = c._1 -> (L - i)
   private def firstRow(c: YX): Boolean = c._1 == 0
   private def lastRow(c: YX): Boolean = c._1 == L
   private def firstCol(c: YX): Boolean = c._2 == 0
   private def lastCol(c: YX): Boolean = c._2 == L
-  private def x(c: YX): Int = c._2
-  private def y(c: YX): Int = c._1
 
-  private def fall(yxs: Iterable[YX], selector: YX => Int, relocate: (YX, Int) => YX): Boolean = {
-    var counters: Int = 0
-    yxs.foldLeft(false) { case (acc, c) =>
+  private def fall(yx: PositionIterator, a: Action): Boolean = {
+    val rightOrDown = a == Action.Down || a == Action.Right
+    val horizontal = a == Action.Left || a == Action.Right
+    var counters: Int = if (rightOrDown) 0x03030303 else 0
+    var it = yx
+    var changed = false
+    while (it.hasNext) {
+      val c = it.current
       val v = valueAt(c)
-      if (v == 0) acc
-      else {
-        val index = selector(c)
+      if (v != 0) {
+        val index = if (horizontal) c.y else c.x
         val counter = (counters >> (index * 8)) & 0xff
-        val target = relocate(c, counter)
-        counters += (1 << (index * 8))
-        if (target != c)  {
+        val target = if (horizontal) c.withX(counter) else c.withY(counter)
+        val inc = 1 << (index * 8)
+        if (rightOrDown) counters -= inc else counters += inc
+        if (target != c) {
           set(target, v)
           set(c, 0)
-          true
-        } else acc
+          changed = true
+        }
       }
+      it = it.iterate
     }
+    changed
   }
 
   private def merge(yxs: Iterable[YX], neighbor: YX => YX): Boolean = {

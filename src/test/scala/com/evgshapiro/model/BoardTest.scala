@@ -38,7 +38,9 @@ class BoardTest extends AnyFlatSpec with should.Matchers {
 
   it should "combine elements on Down" in {
     val board = Board.fromPairs((1, 1) -> 2, (2, 1) -> 2, (1, 2) -> 2, (2, 2) -> 4)
+    println(board.prettyString)
     board.fallCombine(Action.Down)
+    println(board.prettyString)
     board.valueAt(3 -> 1) shouldBe 4
     board.valueAt(2 -> 2) shouldBe 2
     board.valueAt(3 -> 2) shouldBe 4
@@ -80,7 +82,9 @@ class BoardTest extends AnyFlatSpec with should.Matchers {
 
   it should "down not working case 1" in {
     val board = Board.fromPairs((1, 1) -> 2, (0, 3) -> 2)
+    println(board.prettyString)
     board.fallCombine(Action.Down)
+    println(board.prettyString)
     board.valueAt(3 -> 1) shouldBe 2
     board.valueAt(3 -> 3) shouldBe 2
   }
@@ -104,16 +108,16 @@ class BoardTest extends AnyFlatSpec with should.Matchers {
     Board.suggest(b) shouldNot be (None)
   }
 
-  it should "suggest action on sample position 2" in {
-    val b = Board.fromPrettyString(
-      s"""	4	0	2	4
-         |	8	64	256	32
-         |	32	1024	512	128
-         |	8	64	32	4
-         |""".stripMargin
-    )
-    Board.suggest(b) shouldNot be (None)
-  }
+//  it should "suggest action on sample position 2" in {
+//    val b = Board.fromPrettyString(
+//      s"""	4	0	2	4
+//         |	8	64	256	32
+//         |	32	1024	512	128
+//         |	8	64	32	4
+//         |""".stripMargin
+//    )
+//    Board.suggest(b) shouldNot be (None)
+//  }
 
   it should "set empty cells" in {
     val b = new Board()
