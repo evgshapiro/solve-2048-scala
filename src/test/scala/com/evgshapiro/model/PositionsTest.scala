@@ -35,7 +35,7 @@ class PositionsTest extends AnyFlatSpec with should.Matchers {
   }
 
   "Forward PositionIterator" should "be able to iterate forward" in {
-    val ps = PositionIterator.topLeftToBottomRight.asScalaIterator.take(20).toSeq
+    val ps = PositionIterator.topLeftToBottomRight.asIterator.take(20).toSeq
     ps shouldBe 0.until(16)
   }
 
@@ -44,8 +44,40 @@ class PositionsTest extends AnyFlatSpec with should.Matchers {
     PositionIterator.topLeftToBottomRight.hasNext shouldBe true
   }
 
+  it should "store skip mask" in {
+    val p = PositionIterator.topLeftToBottomRight.withSkipMask(3, 1)
+    p.skipMask shouldBe 3
+    p.skipValue shouldBe 1
+  }
+
+  it should "skip first row with masking" in {
+    val ps = PositionIterator.topLeftToBottomRight.skipFirstRow
+    ps.asIterator.count(_.isFirstRow) shouldBe 0
+  }
+
+  it should "skip last row with masking" in {
+    val ps = PositionIterator.topLeftToBottomRight.skipLastRow
+    ps.asIterator.count(_.isLastRow) shouldBe 0
+  }
+
+  it should "skip first col with masking" in {
+    val ps = PositionIterator.topLeftToBottomRight.skipFirstCol
+    ps.asIterator.count(_.isFirstCol) shouldBe 0
+  }
+
+  it should "skip last col with masking" in {
+    val ps = PositionIterator.topLeftToBottomRight.skipLastCol
+    ps.asIterator.count(_.isLastCol) shouldBe 0
+  }
+
+  it should "throw an exception on iterating past the end" in {
+    val i = 0.to(15).foldLeft(PositionIterator.topLeftToBottomRight) { case (it, _) => it.iterate }
+    an [Exception] should be thrownBy i.iterate
+  }
+
   "Backward PositionIterator" should "be able to iterate backward" in {
-    val ps = PositionIterator.bottomRightToTopLeft.asScalaIterator.take(20).toSeq
+    val ps = PositionIterator.bottomRightToTopLeft.asIterator.take(20).toSeq
     ps shouldBe 15.to(0, -1)
+
   }
 }

@@ -2,6 +2,7 @@ package com.evgshapiro.model
 
 import scala.collection.mutable
 import Board.*
+import com.evgshapiro.model.Positions._
 
 import java.util.concurrent.ThreadLocalRandom
 import scala.annotation.tailrec
@@ -98,6 +99,7 @@ class Board(board: Array[Int] = new Array[Int](16)) {
 
   def copy(): Board = new Board(Array.copyOf[Int](board, 16))
 
+  inline def valueAt(p: Position): Int = board(p.asInt)
   inline def valueAt(c: YX): Int = board(lc(guard(c)))
   inline def isEmpty(c: YX): Boolean = valueAt(c) == 0
 
@@ -122,6 +124,10 @@ class Board(board: Array[Int] = new Array[Int](16)) {
       i += 1
     }
     n
+  }
+
+  inline def set(p: Position, v: Int): Unit = {
+    board(p.asInt) = v
   }
 
   inline def set(c: YX, v: Int): Unit = {
