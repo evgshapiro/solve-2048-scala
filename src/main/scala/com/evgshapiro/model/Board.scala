@@ -93,21 +93,15 @@ class Board(board: Array[Int] = new Array[Int](16)) {
   }
 
   def prettyString: String = {
-    val s = new StringBuffer
-    topLeftToBottomRight.foreach { case c@(_,x) =>
-      s.append("\t")
-      s.append(valueAt(c))
-      if (x == L) s.append("\n")
-    }
-    s.toString
+    board.grouped(4).map(_.mkString("\t")).mkString("\n")
   }
 
   def copy(): Board = new Board(Array.copyOf[Int](board, 16))
 
-  def valueAt(c: YX): Int = board(lc(guard(c)))
-  def isEmpty(c: YX): Boolean = valueAt(c) == 0
+  inline def valueAt(c: YX): Int = board(lc(guard(c)))
+  inline def isEmpty(c: YX): Boolean = valueAt(c) == 0
 
-  def setEmptyCell(ith: Int, v: Int): Unit = {
+  inline def setEmptyCell(ith: Int, v: Int): Unit = {
     var n = 0
     var i = 0
     while (i < board.length){
@@ -120,7 +114,7 @@ class Board(board: Array[Int] = new Array[Int](16)) {
     }
   }
 
-  def emptyCellsCount: Int = {
+  inline def emptyCellsCount: Int = {
     var n = 0
     var i = 0
     while (i < board.length){
@@ -130,13 +124,13 @@ class Board(board: Array[Int] = new Array[Int](16)) {
     n
   }
 
-  def set(c: YX, v: Int): Unit = {
+  inline def set(c: YX, v: Int): Unit = {
     val t = lc(guard(c))
     board(t) = v
   }
 
-  private def lc(c: YX): Int = c._1 * 4 + c._2
-  private def guard(c: YX): YX =
+  private inline def lc(c: YX): Int = c._1 * 4 + c._2
+  private inline def guard(c: YX): YX =
     if (c._1 >= 0 && c ._1 <= L && c._2 >= 0 && c._2 <= L) c
     else throw new IllegalArgumentException(s"Invalid coordinates: $c")
 
@@ -174,14 +168,11 @@ object Board {
       // Take 4 samples due to random tile generation
       1.to(4).flatMap(_ => b.action(a).map(s => a -> s))
     }
-    val maxTile = b.valueAt(topLeftToBottomRight.maxBy(b.valueAt))
-    val maxLevel =
-      if (maxTile > 2048) 7
-      else if (maxTile == 2048) 6
-      else if (maxTile == 1024) 5
-      else if (maxTile == 512) 4
-      else 2
+    val emptyCells = b.emptyCellsCount
+    val maxLevel = if (emptyCells > 4) 2 else if (emptyCells < 2) 7 else 5
     suggestInternal(actionBoards.par, 0, maxLevel)
+      .orElse(suggestInternal(actionBoards.par, 0, 2))
+      .orElse(suggestInternal(actionBoards.par, 0, 0)) // Recommend any legal move
   }
 
   @tailrec
@@ -192,7 +183,10 @@ object Board {
         scores
       }
       val maxScore = s.max
-      if (maxScore == 0) None
+      if (maxScore == 0) {
+        // Recommend any legal move
+        q.headOption.map(_._1)
+      }
       else {
         val ord =
           if (s(0) == maxScore) 0

@@ -103,6 +103,25 @@ class BoardTest extends AnyFlatSpec with should.Matchers {
     )
     Board.suggest(b) shouldNot be (None)
   }
+
+  it should "suggest action on sample position 2" in {
+    val b = Board.fromPrettyString(
+      s"""	4	0	2	4
+         |	8	64	256	32
+         |	32	1024	512	128
+         |	8	64	32	4
+         |""".stripMargin
+    )
+    Board.suggest(b) shouldNot be (None)
+  }
+
+  it should "set empty cells" in {
+    val b = new Board()
+    b.setEmptyCell(0, 2)
+    b.setEmptyCell(2, 4)
+    b.valueAt(0 -> 0) shouldBe 2
+    b.valueAt(0 -> 3) shouldBe 4
+  }
 }
 
 /*
