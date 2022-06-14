@@ -38,9 +38,9 @@ class Board(board: Array[Int] = new Array[Int](16)) {
   def fallCombine(a: Action): Boolean = {
     val (it, nbr, pit) = a match {
       case Action.Left => (PositionIterator.topLeftToBottomRight.skipFirstCol, prevCol, PositionIterator.topLeftToBottomRight)
-      case Action.Right => (PositionIterator.topLeftToBottomRight.skipLastCol, nextCol, PositionIterator.bottomRightToTopLeft)
+      case Action.Right => (PositionIterator.bottomRightToTopLeft.skipLastCol, nextCol, PositionIterator.bottomRightToTopLeft)
       case Action.Up => (PositionIterator.topLeftToBottomRight.skipFirstRow, prevRow, PositionIterator.topLeftToBottomRight)
-      case Action.Down => (PositionIterator.topLeftToBottomRight.skipLastRow, nextRow, PositionIterator.bottomRightToTopLeft)
+      case Action.Down => (PositionIterator.bottomRightToTopLeft.skipLastRow, nextRow, PositionIterator.bottomRightToTopLeft)
     }
     val f1 = fall(pit, a)
     val m = merge(it, nbr)

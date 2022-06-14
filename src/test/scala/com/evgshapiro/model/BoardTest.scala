@@ -31,16 +31,16 @@ class BoardTest extends AnyFlatSpec with should.Matchers {
 
   it should "combine elements from right to left on Right" in {
     val board = Board.fromPairs((0, 0) -> 2, (0, 1) -> 2, (0, 2) -> 2)
+    println(board.prettyString)
     board.fallCombine(Action.Right)
+    println(board.prettyString)
     board.valueAt(0 -> 2) shouldBe 2
     board.valueAt(0 -> 3) shouldBe 4
   }
 
   it should "combine elements on Down" in {
     val board = Board.fromPairs((1, 1) -> 2, (2, 1) -> 2, (1, 2) -> 2, (2, 2) -> 4)
-    println(board.prettyString)
     board.fallCombine(Action.Down)
-    println(board.prettyString)
     board.valueAt(3 -> 1) shouldBe 4
     board.valueAt(2 -> 2) shouldBe 2
     board.valueAt(3 -> 2) shouldBe 4
@@ -48,7 +48,9 @@ class BoardTest extends AnyFlatSpec with should.Matchers {
 
   it should "combine elements from bottom to top on Down" in {
     val board = Board.fromPairs((0, 0) -> 2, (1, 0) -> 2, (2, 0) -> 2)
+//    println(board.prettyString)
     board.fallCombine(Action.Down)
+//    println(board.prettyString)
     board.valueAt(2 -> 0) shouldBe 2
     board.valueAt(3 -> 0) shouldBe 4
   }
