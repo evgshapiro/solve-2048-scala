@@ -39,10 +39,12 @@ object Positions {
    * can skip values that satisfy a condition: value & skip mask = skip value
    * Bits are packed as follows:
    * 0-3: current position
+   * 4: reserved
    * 5: 0 - iterator moves forward, 1 - backwards
    * 6-9: skip mask
    * 10-13: skip value
    * 14: enable-skip mask
+   * 15-30: reserved
    * 31: 0 - iterator has more elements, 1 - iterator has been exhausted
    */
   opaque type PositionIterator = Int
@@ -74,7 +76,7 @@ object Positions {
     inline def skipLastCol: PositionIterator = withSkipMask(3 /* 0011 */, 3)
 
     inline def skipMask: Int = (pi >> 6) & posMask
-     inline def skipValue: Int = (pi >> 10) & posMask
+    inline def skipValue: Int = (pi >> 10) & posMask
     private inline def isLastPosition(c: Position): Boolean = {
       val f = isForward
       f && c == lastPositionForward || !f && c == lastPositionBackward

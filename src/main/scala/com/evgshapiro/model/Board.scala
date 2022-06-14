@@ -17,9 +17,8 @@ enum Action {
 class Board(board: Array[Int] = new Array[Int](16)) {
   require(board.length == 16)
 
-  private val r = ThreadLocalRandom.current()
-
   def addRandomTile(): Boolean = {
+    val r = ThreadLocalRandom.current()
     val v = if (r.nextDouble() > 0.1) 2 else 4
     val empty = emptyCellsCount
     if (empty == 0) false
@@ -37,22 +36,17 @@ class Board(board: Array[Int] = new Array[Int](16)) {
   }
 
   def fallCombine(a: Action): Boolean = {
-    val (it, mergeSkip, nbr, pit) = a match {
-      case Action.Left => (topLeftToBottomRight, firstCol, prevCol, PositionIterator.topLeftToBottomRight)
-      case Action.Right => (bottomRightToTopLeft, lastCol, nextCol, PositionIterator.bottomRightToTopLeft)
-      case Action.Up => (topLeftToBottomRight, firstRow, prevRow, PositionIterator.topLeftToBottomRight)
-      case Action.Down => (bottomRightToTopLeft, lastRow, nextRow, PositionIterator.bottomRightToTopLeft)
+    val (it, nbr, pit) = a match {
+      case Action.Left => (PositionIterator.topLeftToBottomRight.skipFirstCol, prevCol, PositionIterator.topLeftToBottomRight)
+      case Action.Right => (PositionIterator.topLeftToBottomRight.skipLastCol, nextCol, PositionIterator.bottomRightToTopLeft)
+      case Action.Up => (PositionIterator.topLeftToBottomRight.skipFirstRow, prevRow, PositionIterator.topLeftToBottomRight)
+      case Action.Down => (PositionIterator.topLeftToBottomRight.skipLastRow, nextRow, PositionIterator.bottomRightToTopLeft)
     }
     val f1 = fall(pit, a)
-    val m = merge(it.view.filterNot(mergeSkip), nbr)
+    val m = merge(it, nbr)
     fall(pit, a)
     f1 || m
   }
-
-  private def firstRow(c: YX): Boolean = c._1 == 0
-  private def lastRow(c: YX): Boolean = c._1 == L
-  private def firstCol(c: YX): Boolean = c._2 == 0
-  private def lastCol(c: YX): Boolean = c._2 == L
 
   private def fall(yx: PositionIterator, a: Action): Boolean = {
     val rightOrDown = a == Action.Down || a == Action.Right
@@ -80,18 +74,22 @@ class Board(board: Array[Int] = new Array[Int](16)) {
     changed
   }
 
-  private def merge(yxs: Iterable[YX], neighbor: YX => YX): Boolean = {
-    yxs.foldLeft(false) { case (acc, c) =>
+  private def merge(yxs: PositionIterator, neighbor: Position => Position): Boolean = {
+    var it = yxs
+    var r = false
+    while (it.hasNext) {
+      val c = it.current
       val vc = valueAt(c)
       val nc = neighbor(c)
       val vnc = valueAt(nc)
       if (vc == vnc && vc != 0) {
         set(nc, vc * 2)
         set(c, 0)
-        true
+        r = true
       }
-      else acc
+      it = it.iterate
     }
+    r
   }
 
   def prettyString: String = {
@@ -102,7 +100,6 @@ class Board(board: Array[Int] = new Array[Int](16)) {
 
   inline def valueAt(p: Position): Int = board(p.asInt)
   inline def valueAt(c: YX): Int = board(lc(guard(c)))
-  inline def isEmpty(c: YX): Boolean = valueAt(c) == 0
 
   inline def setEmptyCell(ith: Int, v: Int): Unit = {
     var n = 0
@@ -141,10 +138,10 @@ class Board(board: Array[Int] = new Array[Int](16)) {
     if (c._1 >= 0 && c ._1 <= L && c._2 >= 0 && c._2 <= L) c
     else throw new IllegalArgumentException(s"Invalid coordinates: $c")
 
-  private def prevRow(c: YX): YX = (c._1 - 1) -> c._2
-  private def nextRow(c: YX): YX = (c._1 + 1) -> c._2
-  private def prevCol(c: YX): YX = c._1 -> (c._2 - 1)
-  private def nextCol(c: YX): YX = c._1 -> (c._2 + 1)
+  private def prevRow(c: Position): Position = c.prevRow
+  private def nextRow(c: Position): Position = c.nextRow
+  private def prevCol(c: Position): Position = c.prevCol
+  private def nextCol(c: Position): Position = c.nextCol
 
 }
 
@@ -176,7 +173,13 @@ object Board {
       1.to(4).flatMap(_ => b.action(a).map(s => a -> s))
     }
     val emptyCells = b.emptyCellsCount
-    val maxLevel = if (emptyCells > 4) 2 else if (emptyCells < 2) 7 else 5
+    // Search depth
+    val maxLevel =
+      emptyCells match {
+        case 0 | 1 => 7
+        case 2 | 3 | 4 => 5
+        case _ => 2
+      }
     suggestInternal(actionBoards.par, 0, maxLevel)
       .orElse(suggestInternal(actionBoards.par, 0, 2))
       .orElse(suggestInternal(actionBoards.par, 0, 0)) // Recommend any legal move
