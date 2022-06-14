@@ -99,7 +99,7 @@ class Board(board: Array[Int] = new Array[Int](16)) {
   def copy(): Board = new Board(Array.copyOf[Int](board, 16))
 
   inline def valueAt(p: Position): Int = board(p.asInt)
-  inline def valueAt(c: YX): Int = board(lc(guard(c)))
+  inline def valueAt(c: YX): Int = valueAt(Position.apply.tupled(c))
 
   inline def setEmptyCell(ith: Int, v: Int): Unit = {
     var n = 0
@@ -127,16 +127,6 @@ class Board(board: Array[Int] = new Array[Int](16)) {
   inline def set(p: Position, v: Int): Unit = {
     board(p.asInt) = v
   }
-
-  inline def set(c: YX, v: Int): Unit = {
-    val t = lc(guard(c))
-    board(t) = v
-  }
-
-  private inline def lc(c: YX): Int = c._1 * 4 + c._2
-  private inline def guard(c: YX): YX =
-    if (c._1 >= 0 && c ._1 <= L && c._2 >= 0 && c._2 <= L) c
-    else throw new IllegalArgumentException(s"Invalid coordinates: $c")
 
   private def prevRow(c: Position): Position = c.prevRow
   private def nextRow(c: Position): Position = c.nextRow
@@ -219,7 +209,7 @@ object Board {
 
   def fromPairs(vs: (YX, Int)*): Board = {
     val b = new Board()
-    vs.foreach { case (c, v) => b.set(c, v) }
+    vs.foreach { case (c, v) => b.set(Position(c._1, c._2), v) }
     b
   }
 
